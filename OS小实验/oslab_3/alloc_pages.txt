@@ -1,0 +1,91 @@
+alloc_a_4k_page:                        ; arg none
+					; return eax: physical address
+					; physical address begin at 0x00000000
+	; save reg
+	push  ds
+	push  es
+	; fuction implement
+	xor eax, eax
+	mov ax, SelectorFlatRW
+	mov es, ax
+	mov ax, SelectorData
+	mov ds, ax
+	
+.search:
+	bts  [BitMap], eax
+	jnc  .find
+	inc  eax 
+	cmp  eax,BitMapLen*8
+	jl   .search
+
+	; no available physical space
+	; we should move one page back to disk
+	; but for simplicity, we hlt
+	hlt
+
+.find:  
+	shl  eax,12	;ecx -> avaiable physical addr
+	pop  es
+	pop  ds
+	ret
+
+;---------------------------------------------------------------------------
+alloc_pages:                               ; arg: eax : page number
+					   ; return ebx : linear address  
+	; save registers 
+	push ds
+	push es
+	; function implement
+	mov bx, SelectorFlatRW	
+	mov ds, bx
+	mov bx, SelectorData
+	mov es, bx
+	
+	mov ecx, eax              ; ecx means the number of page 
+	mov ebx, 4096
+	mul ebx			  ; ebx means the size of pages
+	
+	mov ebx, [es:AvaLinearAddress] ; ebx means the return value
+	add [es:AvaLinearAddress],eax  ; update the addresss of free linear address
+	push ebx                  ; save the return value
+	mov  eax, ebx
+	mov  ebx, cr3		  ; assume linear2Physical(cr3) = cr3
+        and  ebx, 0xfffff000
+	and  eax, 0xffc00000
+	shr  eax, 20
+	add  ebx, eax             ; ebx means the pde item
+	mov  edx, ebx		  ; edx -> missing pde address
+	mov  ebx, [ebx]           ; ebx means the corresponding page table item
+	;    test p flag
+	test ebx, 0x0000_0001
+	jnz  .pde_exist
+	;    page table is not exist
+	mov ebx, cr3              
+	mov ebx, [ebx]            ; first page table address
+	and ebx, 0xfffff000	
+	shl eax, 10               ; eax means the size of used pages
+	add ebx, eax
+	or  ebx, 0x0000_0007
+	mov [edx], ebx
+
+.pde_exist:
+	mov eax,[esp]
+	and ebx, 0xfffff000
+	and eax, 0x003ff000
+	shr eax, 10
+	add ebx, eax
+
+.change_pte:
+	call alloc_a_4k_page
+	or eax, 0x00000007
+	mov [ebx] , eax
+	add ebx, 4
+	loop  .change_pte
+	
+	pop  ebx	;set return value
+	pop es
+	pop ds
+	ret
+
+
+

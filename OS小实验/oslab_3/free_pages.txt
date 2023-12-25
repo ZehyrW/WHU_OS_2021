@@ -1,0 +1,45 @@
+free_pages:              ; arg  eax,linear address , ebx  page number
+	push ds
+	push es
+	push ebx         ; save eax and ebx
+	push eax
+
+	mov bx, SelectorFlatRW	
+	mov ds, bx
+	mov bx, SelectorData
+	mov es, bx       ; normal init
+		
+	; find the pde and pte 
+	mov ebx, cr3
+	and ebx, 0xfffff000
+	and eax, 0xffc00000	
+	shr eax, 20      ; 20 = 22 -2 
+	add ebx, eax     ; ebx now means the pde item 
+	mov edx, [ebx]
+	and edx, 0xfffffff8
+	mov [ebx], edx   ; set the final 3-bit zero and store back
+	
+	mov ebx, [ebx]   ; now ebx means the first pte item 
+			
+	mov eax, [esp]          ; now eax is the liner address
+	add esp, 4 
+	and ebx,0xfffff000
+	and eax,0x003ff000
+	shr eax,10
+	add ebx, eax       ;  now ebx means the right pte item
+
+	mov ecx, [esp]          ; here ecx means page number
+	add esp,4
+.change_pte:                 ; set every item's last 3-bit zero 
+	mov eax, [ebx]
+	and eax, 0xfffffff8	
+mov edx, eax			    ; now eax is the physical address
+	shr edx, 12
+	btr [BitMap], edx
+	mov [ebx], eax
+	add ebx,32
+	loop .change_pte
+
+	pop es
+	pop ds
+	ret
