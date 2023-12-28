@@ -1,0 +1,28 @@
+
+vul.o：     文件格式 elf32-i386
+
+
+Disassembly of section .text:
+
+00000000 <main>:
+   0:	55                   	push   %ebp
+   1:	89 e5                	mov    %esp,%ebp
+   3:	83 e4 f0             	and    $0xfffffff0,%esp
+   6:	e8 fc ff ff ff       	call   7 <main+0x7>
+   b:	90                   	nop
+   c:	c9                   	leave  
+   d:	c3                   	ret    
+
+0000000e <test>:
+   e:	55                   	push   %ebp
+   f:	89 e5                	mov    %esp,%ebp
+  11:	83 ec 28             	sub    $0x28,%esp
+  14:	c7 45 f4 00 00 00 00 	movl   $0x0,-0xc(%ebp)
+  1b:	81 45 f4 fa 00 00 00 	addl   $0xfa,-0xc(%ebp)
+  22:	8b 45 f4             	mov    -0xc(%ebp),%eax
+  25:	89 44 24 04          	mov    %eax,0x4(%esp)
+  29:	c7 04 24 00 00 00 00 	movl   $0x0,(%esp)
+  30:	e8 fc ff ff ff       	call   31 <test+0x23>
+  35:	90                   	nop
+  36:	c9                   	leave  
+  37:	c3                   	ret    
