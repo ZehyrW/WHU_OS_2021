@@ -27,7 +27,7 @@ vgaromimage: file=/usr/share/vgabios/vgabios.bin
 
 * **在PartA_1文件夹下进入终端，执行以下命令**
 ``` bash
-make image
+$ make image
 ```
 
 * **一直键入```Enter```键**
